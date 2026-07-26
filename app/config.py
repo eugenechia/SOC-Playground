@@ -35,6 +35,17 @@ MAX_NEW_TOKENS = int(os.environ.get("MAX_NEW_TOKENS", "512"))
 # Advisory RAM ceiling for the UI warning; float32 ≈ 4 bytes/param.
 RAM_WARN_PARAM_BILLIONS = float(os.environ.get("RAM_WARN_PARAM_BILLIONS", "1.5"))
 
+# ── Phase 2: agent tool loop ─────────────────────────────────────────
+# Fail-closed killswitch. When off, tasks with tools fall back to plain chat.
+TOOLS_ENABLED = os.environ.get("TOOLS_ENABLED", "1") == "1"
+AGENT_MAX_STEPS = int(os.environ.get("AGENT_MAX_STEPS", "6"))
+AGENT_TIMEOUT_SECONDS = int(os.environ.get("AGENT_TIMEOUT_SECONDS", "300"))
+# Per-step generation cap (tool-call turns are short; keep it tight).
+AGENT_STEP_MAX_NEW_TOKENS = int(os.environ.get("AGENT_STEP_MAX_NEW_TOKENS", "400"))
+
+# ── CrowdStrike Falcon (non-secret; creds via app.secrets.get_secret) ─
+CROWDSTRIKE_BASE_URL = os.environ.get("CROWDSTRIKE_BASE_URL", "https://api.crowdstrike.com")
+
 # ── Tasks ────────────────────────────────────────────────────────────
 BASE_DIR = Path(__file__).resolve().parent.parent
 TASKS_FILE = Path(os.environ.get("TASKS_FILE", str(BASE_DIR / "tasks" / "tasks.yaml")))

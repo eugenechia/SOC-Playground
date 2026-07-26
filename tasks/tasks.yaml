@@ -16,10 +16,15 @@ tasks:
       trees, and telemetry. Be concise and technical. When you are unsure, say
       so — do not fabricate detection names, IOCs, or API fields.
     starter_prompts:
-      - "Summarise the MITRE ATT&CK techniques for suspicious PowerShell activity."
-      - "What Falcon telemetry would confirm credential dumping via LSASS access?"
-      - "Draft a hunt for beaconing to a rare external domain."
-    tools: []
+      - "Look up the Falcon host named DESKTOP-1 and summarise its posture."
+      - "List recent Falcon detections for host DESKTOP-1 in the last 24 hours."
+      - "Any Falcon sightings for SHA256 <paste-a-hash>?"
+    # Phase 2: live read-only Falcon tools. The model calls these via the
+    # prompted-JSON protocol; params are structured (no raw FQL).
+    tools:
+      - falcon_device_lookup
+      - falcon_recent_alerts
+      - falcon_hash_sightings
 
   - id: malware-analysis
     name: Malware Analysis

@@ -16,6 +16,8 @@ RUN pip install --no-cache-dir \
 
 COPY app/ app/
 COPY models_engine/ models_engine/
+COPY integrations/ integrations/
+COPY agents/ agents/
 COPY web/ web/
 COPY tasks/ tasks/
 

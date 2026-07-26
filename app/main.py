@@ -45,9 +45,13 @@ async def lifespan(_: FastAPI):
     if config.DEV_AUTH_BYPASS:
         log.warning("DEV_AUTH_BYPASS is ON — the password gate is skipped. Local dev only.")
     _check_models_dir()
-    log.info("%s starting. MODELS_DIR=%s writable, HF_HOME=%s",
-             config.APP_NAME, config.MODELS_DIR, config.HF_HOME)
+    from integrations import crowdstrike
+    log.info("%s starting. MODELS_DIR=%s writable, tools=%s, falcon=%s",
+             config.APP_NAME, config.MODELS_DIR,
+             "on" if config.TOOLS_ENABLED else "off",
+             "configured" if crowdstrike.configured() else "not-configured")
     yield
+    crowdstrike.close_client()
     log.info("%s shut down.", config.APP_NAME)
 
 

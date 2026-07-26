@@ -127,6 +127,19 @@ class ModelRuntime:
                 yield chunk
         thread.join()
 
+    def generate_text(
+        self,
+        model_id: str,
+        messages: list[dict],
+        system_prompt: str,
+        max_new_tokens: int | None = None,
+    ) -> str:
+        """Full (non-streamed) generation — used by the agent loop, which must
+        see a complete turn before it can parse a tool call."""
+        return "".join(
+            self.generate_stream(model_id, messages, system_prompt, max_new_tokens)
+        )
+
 
 # Process-wide singleton.
 runtime = ModelRuntime()

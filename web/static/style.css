@@ -140,6 +140,18 @@ button:disabled { opacity: 0.5; cursor: default; }
 .bubble-user .bubble-content { color: var(--text); }
 .bubble-assistant .bubble-content { color: #e6edf3; }
 
+/* Phase 2 step trace */
+.bubble-status .bubble-content { color: var(--muted); font-style: italic; }
+.bubble-tool-call, .bubble-tool-result {
+  border-left: 2px solid var(--border); padding-left: 0.7rem; margin-left: 0.2rem;
+}
+.bubble-tool-call .bubble-role { color: var(--accent); }
+.bubble-tool-result .bubble-role { color: var(--ok); }
+.bubble-tool-call .bubble-content, .bubble-tool-result .bubble-content {
+  font-family: monospace; font-size: 0.82rem; color: var(--muted);
+  white-space: pre-wrap; word-break: break-word;
+}
+
 .chat-form { display: flex; flex-direction: column; gap: 0.6rem; }
 .chat-actions { display: flex; gap: 0.6rem; }
 .clear-form { margin-top: 0.75rem; }

@@ -1,7 +1,10 @@
 // Workbench chat. EventSource can't POST, so we POST the form and read the SSE
-// body with fetch()+getReader(), splitting on \n\n frames — the same reader
-// pattern as Orbstack-Local's dashboard. Tokens append into a live assistant
-// bubble; 'done' finalises it.
+// body with fetch()+getReader(), splitting on \n\n frames.
+//
+// Phase 1 (no tools): status -> token* -> done.
+// Phase 2 (tools): status -> (tool_call -> tool_result)* -> token(final) -> done.
+// tool_call/tool_result render as their own step bubbles so the analyst sees
+// exactly how the model uses tools.
 (function () {
   const form = document.getElementById("chat-form");
   if (!form) return;
@@ -13,14 +16,15 @@
     b.addEventListener("click", () => { input.value = b.dataset.prompt; input.focus(); });
   });
 
-  function bubble(role, text) {
+  function scroll() { log.scrollTop = log.scrollHeight; }
+
+  function bubble(role, roleLabel) {
     const el = document.createElement("div");
     el.className = "bubble bubble-" + role;
     el.innerHTML = '<div class="bubble-role"></div><div class="bubble-content"></div>';
-    el.querySelector(".bubble-role").textContent = role;
-    el.querySelector(".bubble-content").textContent = text || "";
+    el.querySelector(".bubble-role").textContent = roleLabel || role;
     log.appendChild(el);
-    log.scrollTop = log.scrollHeight;
+    scroll();
     return el.querySelector(".bubble-content");
   }
 
@@ -30,8 +34,11 @@
     if (!message) return;
     sendBtn.disabled = true;
 
-    bubble("user", message);
-    const assistantEl = bubble("assistant", "");
+    bubble("user", "you").textContent = message;
+
+    // Transient status line; assistant bubble is created lazily on first token.
+    let statusEl = bubble("status", "…");
+    let assistantEl = null;
     let assistant = "";
 
     const body = new FormData();
@@ -40,16 +47,28 @@
     body.append("message", message);
     input.value = "";
 
+    function setStatus(text) {
+      if (!statusEl) statusEl = bubble("status", "…");
+      statusEl.textContent = text;
+      scroll();
+    }
+    function clearStatus() {
+      if (statusEl && statusEl.parentElement) statusEl.parentElement.remove();
+      statusEl = null;
+    }
+
     let resp;
     try {
       resp = await fetch("/workbench/chat", { method: "POST", body });
     } catch (err) {
-      assistantEl.textContent = "network error: " + err.message;
+      clearStatus();
+      bubble("assistant", "assistant").textContent = "network error: " + err.message;
       sendBtn.disabled = false;
       return;
     }
     if (!resp.ok || !resp.body) {
-      assistantEl.textContent = "http " + resp.status;
+      clearStatus();
+      bubble("assistant", "assistant").textContent = "http " + resp.status;
       sendBtn.disabled = false;
       return;
     }
@@ -72,19 +91,34 @@
         }
         let d = {};
         try { d = data ? JSON.parse(data) : {}; } catch (_) {}
+
         if (event === "status") {
-          if (!assistant) assistantEl.textContent = "… " + (d.message || "loading");
+          setStatus(d.message || "…");
+        } else if (event === "tool_call") {
+          clearStatus();
+          const el = bubble("tool-call", "tool call");
+          el.textContent = d.tool + "(" + JSON.stringify(d.args || {}) + ")";
+        } else if (event === "tool_result") {
+          const el = bubble("tool-result", "tool result");
+          let r = d.result;
+          el.textContent = typeof r === "string" ? r : JSON.stringify(r, null, 0);
         } else if (event === "token") {
+          clearStatus();
+          if (!assistantEl) assistantEl = bubble("assistant", "assistant");
           assistant += d.text || "";
           assistantEl.textContent = assistant;
-          log.scrollTop = log.scrollHeight;
+          scroll();
         } else if (event === "error") {
+          clearStatus();
+          if (!assistantEl) assistantEl = bubble("assistant", "assistant");
           assistantEl.textContent = "error: " + (d.message || "generation failed");
         } else if (event === "done") {
-          if (!assistant) assistantEl.textContent = "(no output)";
+          clearStatus();
+          if (!assistantEl) bubble("assistant", "assistant").textContent = "(no output)";
         }
       }
     }
+    clearStatus();
     sendBtn.disabled = false;
     input.focus();
   });
