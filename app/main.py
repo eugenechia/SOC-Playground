@@ -16,7 +16,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
 from app import auth, config
-from app.routes import events, health, models, ui, workbench
+from app.routes import events, health, models, scorecard, ui, workbench
 from app.secrets import get_secret
 
 logging.basicConfig(
@@ -75,4 +75,5 @@ app.include_router(health.router)
 app.include_router(events.router)
 app.include_router(models.router)
 app.include_router(workbench.router)
+app.include_router(scorecard.router)
 app.include_router(ui.router)

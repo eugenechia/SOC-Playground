@@ -156,6 +156,24 @@ button:disabled { opacity: 0.5; cursor: default; }
 .chat-actions { display: flex; gap: 0.6rem; }
 .clear-form { margin-top: 0.75rem; }
 
+/* ── Scorecard ───────────────────────────────────────────── */
+.scorecard-form { display: flex; flex-direction: column; gap: 0.9rem; }
+.model-picks { display: flex; flex-direction: column; gap: 0.4rem; }
+.pick { font-family: monospace; font-size: 0.9rem; color: var(--text); cursor: pointer; }
+#run-btn { align-self: flex-start; }
+#run-status { margin-left: 0.5rem; }
+.table-scroll { overflow-x: auto; }
+.scorecard-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.scorecard-table th, .scorecard-table td {
+  text-align: left; padding: 0.5rem 0.7rem; border-bottom: 1px solid var(--border);
+}
+.scorecard-table th { color: var(--muted); font-weight: 600; }
+.scorecard-table td.mono, .mono { font-family: monospace; }
+.scorecard-table td.overall { font-weight: 700; color: #e6edf3; }
+.case-list { margin: 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: 0.6rem; }
+.case-list .mono { color: var(--accent); }
+.case-prompt { margin-top: 0.2rem; }
+
 /* ── Login ───────────────────────────────────────────────── */
 .login-body { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
 .login-card {

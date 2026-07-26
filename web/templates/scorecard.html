@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Scorecard — {{ app_name }}{% endblock %}
+{% block body %}
+<div class="panel">
+  <h2>Model tool-calling scorecard</h2>
+  <p class="muted">
+    Runs a fixed suite of SOC cases against each selected model through the agent
+    loop with mock tools, and scores whether it picks the right tool, extracts the
+    right parameters, and finishes. Deterministic and offline — no live Falcon.
+  </p>
+
+  {% if not models %}
+    <div class="empty">No models downloaded. <a href="/models">Download one</a> first.</div>
+  {% else %}
+    <form id="scorecard-form" class="scorecard-form">
+      <div class="model-picks">
+        {% for m in models %}
+          <label class="pick">
+            <input type="checkbox" name="models" value="{{ m }}" checked> {{ m }}
+          </label>
+        {% endfor %}
+      </div>
+      <button type="submit" id="run-btn">Run benchmark</button>
+      <span id="run-status" class="muted"></span>
+    </form>
+  {% endif %}
+</div>
+
+<div class="panel">
+  <h2>Results</h2>
+  <p id="results-meta" class="muted">
+    {% if latest %}Last run: {{ latest.generated_at }}{% else %}No runs yet.{% endif %}
+  </p>
+  <div class="table-scroll">
+    <table class="scorecard-table">
+      <thead>
+        <tr>
+          <th>Model</th><th>Tool selection</th><th>Params</th><th>Completed</th><th>Overall</th>
+        </tr>
+      </thead>
+      <tbody id="scorecard-body">
+        {% if latest %}
+          {% for row in latest.models %}
+          <tr data-model="{{ row.model }}">
+            <td class="mono">{{ row.model }}</td>
+            <td>{{ (row.summary.tool * 100) | round | int }}%</td>
+            <td>{{ (row.summary.params * 100) | round | int }}%</td>
+            <td>{{ (row.summary.completed * 100) | round | int }}%</td>
+            <td class="overall">{{ (row.summary.overall * 100) | round | int }}%</td>
+          </tr>
+          {% endfor %}
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Benchmark cases</h2>
+  <ol class="case-list">
+    {% for c in cases %}
+      <li>
+        <span class="mono">{{ c.id }}</span> —
+        expects <span class="mono">{{ c.expected_tool or "no tool" }}</span>
+        <div class="muted case-prompt">{{ c.prompt }}</div>
+      </li>
+    {% endfor %}
+  </ol>
+</div>
+
+<script src="/static/scorecard.js" defer></script>
+{% endblock %}
