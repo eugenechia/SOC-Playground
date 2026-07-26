@@ -16,7 +16,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
 from app import auth, config
-from app.routes import events, health, models, scorecard, ui, workbench
+from app.routes import events, health, models, scorecard, skills_library, ui, workbench
 from app.secrets import get_secret
 
 logging.basicConfig(
@@ -59,6 +59,8 @@ async def lifespan(_: FastAPI):
     crowdstrike.close_client()
     sentinel.close_client()
     jira.close_client()
+    from app import skill_library
+    skill_library.close_client()
     log.info("%s shut down.", config.APP_NAME)
 
 
@@ -83,4 +85,5 @@ app.include_router(events.router)
 app.include_router(models.router)
 app.include_router(workbench.router)
 app.include_router(scorecard.router)
+app.include_router(skills_library.router)
 app.include_router(ui.router)

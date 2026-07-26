@@ -50,6 +50,26 @@ CROWDSTRIKE_BASE_URL = os.environ.get("CROWDSTRIKE_BASE_URL", "https://api.crowd
 BASE_DIR = Path(__file__).resolve().parent.parent
 TASKS_FILE = Path(os.environ.get("TASKS_FILE", str(BASE_DIR / "tasks" / "tasks.yaml")))
 
+# ── Skill Library ────────────────────────────────────────────────────
+# Browsable reference library of framework-mapped cybersecurity SOPs, fetched
+# live from the open-source Anthropic-Cybersecurity-Skills repo (Apache-2.0) and
+# cached in-process. Read-only; no model involvement. Fail-closed killswitch.
+SKILLS_LIBRARY_ENABLED = os.environ.get("SKILLS_LIBRARY_ENABLED", "1") == "1"
+# Raw base is the GitHub raw root for the repo at a pinned ref; the app only ever
+# fetches `index.json` and `skills/<slug>/SKILL.md` under it (slug gated to the
+# index — no arbitrary URL fetch).
+SKILLS_REPO_RAW_BASE = os.environ.get(
+    "SKILLS_REPO_RAW_BASE",
+    "https://raw.githubusercontent.com/mukul975/Anthropic-Cybersecurity-Skills/main",
+).rstrip("/")
+# Human-facing source repo (attribution link on the pages).
+SKILLS_REPO_HTML_BASE = os.environ.get(
+    "SKILLS_REPO_HTML_BASE",
+    "https://github.com/mukul975/Anthropic-Cybersecurity-Skills",
+).rstrip("/")
+SKILLS_CACHE_TTL_SECONDS = int(os.environ.get("SKILLS_CACHE_TTL_SECONDS", str(6 * 3600)))
+SKILLS_HTTP_TIMEOUT = int(os.environ.get("SKILLS_HTTP_TIMEOUT", "20"))
+
 # ── Local development ────────────────────────────────────────────────
 # Skip the password gate with a synthetic session. NEVER set in Azure.
 DEV_AUTH_BYPASS = os.environ.get("DEV_AUTH_BYPASS", "") == "1"

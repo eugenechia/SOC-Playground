@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Skills — {{ app_name }}{% endblock %}
+{% block body %}
+<div class="panel">
+  <h2>Cybersecurity skill library</h2>
+  <div class="explainer">
+    <p><strong>What is this page?</strong> A browsable reference of
+    <strong>{{ skills|length if skills else 0 }} cybersecurity playbooks</strong> —
+    step-by-step procedures for threat hunting, malware analysis, forensics, cloud
+    security and more, each mapped to industry frameworks (MITRE ATT&amp;CK, NIST CSF,
+    D3FEND).</p>
+    <p class="explainer-note">These are written as detailed procedures for capable AI
+    agents and human analysts. Think of them as a searchable knowledge base — a place to
+    look up "how do I analyze X?" — not something the small local models here will run
+    end-to-end. Content is pulled live from the open-source
+    <a href="{{ repo_url }}" target="_blank" rel="noopener">Anthropic-Cybersecurity-Skills</a>
+    repository (Apache-2.0).</p>
+  </div>
+
+  {% if error %}
+    <div class="error-box">{{ error }}</div>
+  {% elif skills %}
+    <div class="filter-bar">
+      <input type="text" id="skill-search" placeholder="Search {{ skills|length }} skills by name or description…" autocomplete="off">
+      <span id="skill-count" class="muted"></span>
+    </div>
+
+    <div class="model-list" id="skill-list">
+      {% for s in skills %}
+        <a class="model-card skill-card"
+           href="/skills/{{ s.name }}"
+           data-name="{{ s.name|lower }}"
+           data-desc="{{ s.description|lower }}">
+          <div class="skill-name">{{ s.name.replace('-', ' ') }}</div>
+          <p class="skill-desc">{{ s.description }}</p>
+        </a>
+      {% endfor %}
+    </div>
+    <p id="skill-empty" class="empty" hidden>No skills match your search.</p>
+  {% else %}
+    <div class="empty">No skills to show.</div>
+  {% endif %}
+</div>
+
+<script src="/static/skills.js" defer></script>
+{% endblock %}

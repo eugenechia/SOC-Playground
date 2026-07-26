@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}{{ (skill.name.replace('-', ' ')) if skill else 'Skill' }} — {{ app_name }}{% endblock %}
+{% block body %}
+<p class="muted"><a href="/skills">&larr; Back to skills</a></p>
+
+{% if error %}
+  <div class="panel"><div class="error-box">{{ error }}</div></div>
+{% elif skill %}
+  {% set fm = skill.frontmatter %}
+  <div class="panel">
+    <h2>{{ fm.name or skill.name.replace('-', ' ') }}</h2>
+    {% if fm.description %}<p class="skill-lead">{{ fm.description }}</p>{% endif %}
+
+    <div class="chip-groups">
+      {% if fm.domain %}<div class="chip-group"><span class="chip-label">Domain</span>
+        <span class="chip">{{ fm.domain }}</span></div>{% endif %}
+      {% if fm.subdomain %}<div class="chip-group"><span class="chip-label">Subdomain</span>
+        <span class="chip">{{ fm.subdomain }}</span></div>{% endif %}
+      {% if fm.mitre_attack %}<div class="chip-group"><span class="chip-label">MITRE ATT&amp;CK</span>
+        {% for t in fm.mitre_attack %}<span class="chip chip-attack">{{ t }}</span>{% endfor %}</div>{% endif %}
+      {% if fm.nist_csf %}<div class="chip-group"><span class="chip-label">NIST CSF</span>
+        {% for t in fm.nist_csf %}<span class="chip chip-nist">{{ t }}</span>{% endfor %}</div>{% endif %}
+      {% if fm.d3fend_techniques %}<div class="chip-group"><span class="chip-label">D3FEND</span>
+        {% for t in fm.d3fend_techniques %}<span class="chip">{{ t }}</span>{% endfor %}</div>{% endif %}
+      {% if fm.tags %}<div class="chip-group"><span class="chip-label">Tags</span>
+        {% for t in fm.tags %}<span class="chip chip-tag">{{ t }}</span>{% endfor %}</div>{% endif %}
+    </div>
+
+    <p class="explainer-note" style="margin-top:1rem">
+      Reference only — a procedure for capable agents/analysts, not something the small
+      local models here execute end-to-end.
+      <a href="{{ skill.source_url }}" target="_blank" rel="noopener">View source on GitHub</a>
+      · Apache-2.0.
+    </p>
+  </div>
+
+  <div class="panel">
+    <div class="prose">{{ skill.html | safe }}</div>
+  </div>
+{% else %}
+  <div class="panel"><div class="empty">Skill not found.</div></div>
+{% endif %}
+{% endblock %}

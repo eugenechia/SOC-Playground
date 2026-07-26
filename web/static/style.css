@@ -219,6 +219,40 @@ button:disabled { opacity: 0.5; cursor: default; }
 .case-list .mono { color: var(--accent); }
 .case-prompt { margin-top: 0.2rem; }
 
+/* ── Skill library ───────────────────────────────────────── */
+.filter-bar { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; margin: 1rem 0; }
+.filter-bar #skill-search { flex: 1; min-width: 12rem; }
+.skill-card { display: flex; flex-direction: column; gap: 0.4rem; color: var(--text); text-decoration: none; transition: border-color 0.15s ease, transform 0.15s ease; }
+.skill-card:hover { border-color: var(--accent); transform: translateY(-2px); text-decoration: none; }
+.skill-name { font-weight: 600; font-size: 0.98rem; text-transform: capitalize; }
+.skill-desc { margin: 0; color: var(--muted); font-size: 0.85rem; }
+.skill-lead { font-size: 1.02rem; color: #e6edf3; margin: 0.2rem 0 1rem; max-width: 46rem; }
+
+.chip-groups { display: flex; flex-direction: column; gap: 0.6rem; }
+.chip-group { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: baseline; }
+.chip-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); min-width: 7rem; }
+.chip { font-size: 0.76rem; padding: 0.1rem 0.5rem; border-radius: 999px; background: var(--bg); border: 1px solid var(--border); color: var(--text); }
+.chip-attack { border-color: rgba(218, 54, 51, 0.5); color: #ff9a97; }
+.chip-nist { border-color: rgba(46, 160, 67, 0.5); color: #7ee2a8; }
+.chip-tag { color: var(--muted); }
+
+/* Rendered SKILL.md markdown */
+.prose { color: var(--text); overflow-wrap: anywhere; }
+.prose h1, .prose h2, .prose h3, .prose h4 { color: #e6edf3; margin: 1.4rem 0 0.6rem; line-height: 1.3; }
+.prose h1 { font-size: 1.45rem; } .prose h2 { font-size: 1.2rem; } .prose h3 { font-size: 1.05rem; }
+.prose h1:first-child, .prose h2:first-child { margin-top: 0; }
+.prose p, .prose li { font-size: 0.95rem; }
+.prose ul, .prose ol { padding-left: 1.4rem; }
+.prose li { margin: 0.25rem 0; }
+.prose a { color: var(--accent); }
+.prose code { background: var(--panel-2); padding: 0.1em 0.35em; border-radius: 4px; font-size: 0.85em; }
+.prose pre { background: var(--panel-2); border: 1px solid var(--border); border-radius: 6px; padding: 0.9rem 1rem; overflow-x: auto; }
+.prose pre code { background: none; padding: 0; font-size: 0.82rem; }
+.prose blockquote { border-left: 3px solid var(--border); margin: 0.8rem 0; padding: 0.2rem 0 0.2rem 0.9rem; color: var(--muted); }
+.prose table { border-collapse: collapse; width: 100%; font-size: 0.88rem; margin: 0.8rem 0; display: block; overflow-x: auto; }
+.prose th, .prose td { border: 1px solid var(--border); padding: 0.4rem 0.6rem; text-align: left; }
+.prose th { color: var(--muted); }
+
 /* ── Login ───────────────────────────────────────────────── */
 .login-body { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
 .login-card {
