@@ -1,0 +1,23 @@
+# Secrets — never committed
+.env
+credentials.json
+token.json
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+
+# Downloaded model weights (live on the Azure Files mount / compose volume, never git)
+/models/
+*.safetensors
+*.gguf
+.hf_cache/
+
+# Intermediates
+.tmp/
+
+# macOS
+.DS_Store

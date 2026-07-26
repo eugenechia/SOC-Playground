@@ -1,0 +1,44 @@
+"""
+Non-secret configuration, parsed once at import from the environment.
+
+The rule (mirrors SOC-Copilot invariant #5): NEVER read os.environ for a
+credential here. Credentials live in app/secrets.py::get_secret. This module
+holds only non-sensitive knobs, so it is safe to log any value in it.
+
+All model weights live under MODELS_DIR, which on Azure is an Azure Files SMB
+mount — the container filesystem is ephemeral and would otherwise re-download
+gigabytes on every restart.
+"""
+import os
+from pathlib import Path
+
+APP_NAME = "SOC-Playground"
+
+# ── Persistent model storage (Azure Files mount in prod) ─────────────
+MODELS_DIR = Path(os.environ.get("MODELS_DIR", "/models")).resolve()
+# Keep the Hugging Face cache under MODELS_DIR so it persists on the same mount.
+HF_HOME = Path(os.environ.get("HF_HOME", str(MODELS_DIR / ".hf_cache"))).resolve()
+
+# ── Download guardrails ──────────────────────────────────────────────
+# Only repos on these hosts may be downloaded (SSRF / arbitrary-source guard).
+ALLOWED_DOWNLOAD_HOSTS = frozenset({"huggingface.co"})
+# Custom modeling code (trust_remote_code) is arbitrary code execution — off.
+TRUST_REMOTE_CODE = os.environ.get("TRUST_REMOTE_CODE", "") == "1"
+# When False, the downloader restricts patterns to safetensors/config/tokenizer
+# and refuses pickle-format weights (*.bin/*.pt/*.pkl can execute code on load).
+ALLOW_PICKLE = os.environ.get("ALLOW_PICKLE", "") == "1"
+# Abuse guard on total snapshot size (default 8 GiB).
+MAX_MODEL_BYTES = int(os.environ.get("MAX_MODEL_BYTES", str(8 * 1024 ** 3)))
+
+# ── Inference bounds ─────────────────────────────────────────────────
+MAX_NEW_TOKENS = int(os.environ.get("MAX_NEW_TOKENS", "512"))
+# Advisory RAM ceiling for the UI warning; float32 ≈ 4 bytes/param.
+RAM_WARN_PARAM_BILLIONS = float(os.environ.get("RAM_WARN_PARAM_BILLIONS", "1.5"))
+
+# ── Tasks ────────────────────────────────────────────────────────────
+BASE_DIR = Path(__file__).resolve().parent.parent
+TASKS_FILE = Path(os.environ.get("TASKS_FILE", str(BASE_DIR / "tasks" / "tasks.yaml")))
+
+# ── Local development ────────────────────────────────────────────────
+# Skip the password gate with a synthetic session. NEVER set in Azure.
+DEV_AUTH_BYPASS = os.environ.get("DEV_AUTH_BYPASS", "") == "1"

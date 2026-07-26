@@ -1,0 +1,49 @@
+# SOC-Playground task registry.
+#
+# A task frames an experiment: system prompt + starter prompts. In Phase 1
+# `tools` is ALWAYS empty (pure chat). Phase 2 will add real tool ids here and
+# resolve them in models_engine/tasks.py::resolve_tools — no other change needed.
+
+tasks:
+  - id: crowdstrike-falcon
+    name: CrowdStrike Falcon
+    description: >
+      Threat-hunting assistant framed around CrowdStrike Falcon detections and
+      telemetry. Experiment with how the model reasons over EDR data.
+    system_prompt: |
+      You are a SOC threat-hunting assistant specialising in CrowdStrike Falcon.
+      Help the analyst hunt for threats across endpoint detections, process
+      trees, and telemetry. Be concise and technical. When you are unsure, say
+      so — do not fabricate detection names, IOCs, or API fields.
+    starter_prompts:
+      - "Summarise the MITRE ATT&CK techniques for suspicious PowerShell activity."
+      - "What Falcon telemetry would confirm credential dumping via LSASS access?"
+      - "Draft a hunt for beaconing to a rare external domain."
+    tools: []
+
+  - id: malware-analysis
+    name: Malware Analysis
+    description: >
+      Assistant for reasoning about malware samples, behaviours, and static/
+      dynamic indicators. Purely analytical — no execution.
+    system_prompt: |
+      You are a malware-analysis assistant. Help the analyst reason about
+      sample behaviour, static indicators (strings, imports, PE structure) and
+      dynamic indicators (processes, network, persistence). Never provide
+      instructions to build or deploy malware; focus on detection and analysis.
+    starter_prompts:
+      - "What static indicators suggest a packed Windows executable?"
+      - "Explain typical persistence mechanisms and how to detect them."
+      - "How would I triage an unknown DLL found in a user's temp folder?"
+    tools: []
+
+  - id: general-soc
+    name: General SOC Assistant
+    description: General-purpose SOC analyst assistant for open-ended experimentation.
+    system_prompt: |
+      You are a helpful SOC analyst assistant. Answer security operations
+      questions clearly and technically. Prefer accuracy over confidence.
+    starter_prompts:
+      - "Explain the difference between a true positive and a benign positive."
+      - "What should an L1 analyst check first on a phishing alert?"
+    tools: []

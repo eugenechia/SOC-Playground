@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Models — {{ app_name }}{% endblock %}
+{% block body %}
+<div class="panel">
+  <h2>Download a model</h2>
+  <p class="muted">
+    Paste a Hugging Face model URL or id (e.g.
+    <code>HuggingFaceTB/SmolLM-360M-Instruct</code>). Only
+    <code>huggingface.co</code> is allowed.
+    {% if not allow_pickle %}Only safetensors weights are downloaded; pickle-format
+    models are blocked.{% endif %}
+    Models above ~{{ ram_warn_b }}B may be slow or run out of memory on CPU.
+  </p>
+  <form hx-post="/models/download" hx-target="#download-area" hx-swap="innerHTML"
+        class="download-form">
+    <input type="text" name="source" placeholder="org/name or https://huggingface.co/org/name"
+           required autocomplete="off">
+    <button type="submit">Download</button>
+  </form>
+  <div id="download-area"></div>
+</div>
+
+<div class="panel">
+  <h2>Downloaded models</h2>
+  <div class="model-list">
+    {% for m in models %}
+      {% include "partials/model_card.html" %}
+    {% else %}
+      <div class="empty">No models yet. Download one above.</div>
+    {% endfor %}
+  </div>
+</div>
+
+<script src="/static/download.js" defer></script>
+{% endblock %}

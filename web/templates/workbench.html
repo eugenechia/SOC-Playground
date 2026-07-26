@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Workbench — {{ app_name }}{% endblock %}
+{% block body %}
+<div class="workbench">
+  <form method="get" action="/workbench" class="picker-bar">
+    <label>
+      Task
+      <select name="task" onchange="this.form.submit()">
+        {% for t in tasks %}
+          <option value="{{ t.id }}" {% if selected_task and t.id == selected_task.id %}selected{% endif %}>{{ t.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      Model
+      <select name="model" onchange="this.form.submit()">
+        {% if not models %}<option value="">— no models downloaded —</option>{% endif %}
+        {% for m in models %}
+          <option value="{{ m.model_id }}" {% if m.model_id == selected_model %}selected{% endif %}>{{ m.model_id }}</option>
+        {% endfor %}
+      </select>
+    </label>
+  </form>
+
+  {% if selected_task %}
+    <p class="muted task-desc">{{ selected_task.description }}</p>
+  {% endif %}
+
+  {% if not models %}
+    <div class="empty">
+      No models available. <a href="/models">Download a model</a> first.
+    </div>
+  {% else %}
+    {% if selected_task and selected_task.starter_prompts %}
+      <div class="starters">
+        <span class="muted">Starters:</span>
+        {% for s in selected_task.starter_prompts %}
+          <button type="button" class="btn-secondary starter-btn" data-prompt="{{ s }}">{{ s }}</button>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <div id="chat-log" class="chat-log">
+      {% for msg in history %}
+        {% set role = msg.role %}{% set content = msg.content %}
+        {% include "partials/chat_bubble.html" %}
+      {% endfor %}
+    </div>
+
+    <form id="chat-form" class="chat-form"
+          data-task="{{ selected_task.id if selected_task else '' }}"
+          data-model="{{ selected_model }}">
+      <textarea id="chat-input" name="message" placeholder="Ask the model…" required></textarea>
+      <div class="chat-actions">
+        <button type="submit" id="chat-send">Send</button>
+      </div>
+    </form>
+    <form method="post" action="/workbench/clear" class="clear-form">
+      <input type="hidden" name="task" value="{{ selected_task.id if selected_task else '' }}">
+      <input type="hidden" name="model" value="{{ selected_model }}">
+      <button type="submit" class="btn-secondary">Clear conversation</button>
+    </form>
+  {% endif %}
+</div>
+
+<script src="/static/chat.js" defer></script>
+{% endblock %}

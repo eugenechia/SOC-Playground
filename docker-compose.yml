@@ -1,0 +1,18 @@
+# Local dev. The named `models` volume stands in for the Azure Files share that
+# is mounted at /models in production. Single service, single replica.
+services:
+  app:
+    build:
+      context: .
+    # 8000 (OrbStack) and 8100 (SOC-Copilot) are taken locally; use 8200.
+    ports:
+      - "8200:8000"
+    env_file: .env
+    environment:
+      MODELS_DIR: /models
+      HF_HOME: /models/.hf_cache
+    volumes:
+      - models:/models
+
+volumes:
+  models:

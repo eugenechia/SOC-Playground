@@ -1,0 +1,20 @@
+<div class="model-card" data-model-id="{{ m.model_id }}">
+  <div class="model-head">
+    <span class="model-name">{{ m.model_id }}</span>
+    <span class="badge badge-{{ m.status }}">{{ m.status }}</span>
+  </div>
+  <div class="model-meta">
+    {% if m.size_bytes %}<span>{{ (m.size_bytes / 1024**3) | round(2) }} GiB</span>{% endif %}
+    {% if m.has_safetensors %}<span class="tag">safetensors</span>{% endif %}
+    {% if m.error %}<span class="model-error">{{ m.error }}</span>{% endif %}
+  </div>
+  <div class="model-actions">
+    {% if m.status == "ready" %}
+      <a class="btn-secondary" href="/workbench?model={{ m.model_id | urlencode }}">Use in Workbench</a>
+    {% endif %}
+    <form method="post" action="/models/{{ m.model_id }}/delete"
+          onsubmit="return confirm('Delete {{ m.model_id }}?')">
+      <button type="submit" class="btn-danger">Delete</button>
+    </form>
+  </div>
+</div>

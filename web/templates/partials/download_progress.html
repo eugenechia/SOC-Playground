@@ -1,0 +1,12 @@
+<div class="download-progress" id="dl-{{ job_id }}"
+     data-job-id="{{ job_id }}" data-model-id="{{ model_id }}">
+  <div class="dl-label">
+    <span class="dl-model">{{ model_id }}</span>
+    <span class="dl-status">starting…</span>
+  </div>
+  <div class="progress-track"><div class="progress-bar" style="width:0%"></div></div>
+  <script>
+    // download.js is loaded on the page; kick off the SSE follow for this job.
+    if (window.attachDownload) window.attachDownload("{{ job_id }}");
+  </script>
+</div>
