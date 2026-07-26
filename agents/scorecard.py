@@ -40,7 +40,7 @@ _W_TOOL, _W_PARAMS, _W_COMPLETED = 0.5, 0.3, 0.2
 # A benign 64-hex sha256 (hash of the empty string) for the hash case.
 _SAMPLE_SHA = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
-# Canned tool results fed back during a benchmark run (never hits Falcon).
+# Canned tool results fed back during a benchmark run (never hits a live API).
 _CANNED: dict[str, dict] = {
     "falcon_device_lookup": {"devices": [{"hostname": "MOCK-HOST", "platform_name": "Windows",
                              "os_version": "10 22H2", "status": "normal",
@@ -51,6 +51,19 @@ _CANNED: dict[str, dict] = {
     "falcon_hash_sightings": {"detections": [{"id": "mock2", "name": "Known Malware",
                              "severity": 90, "tactic": "Execution", "technique": "T1204",
                              "status": "new", "hostname": "MOCK-HOST"}], "count": 1},
+    "sentinel_signins": {"template": "signin_events_for_account", "row_count": 1,
+                         "rows": [{"UserPrincipalName": "user@corp.com", "IPAddress": "1.2.3.4",
+                                   "ResultType": "0"}]},
+    "sentinel_host_processes": {"template": "processes_on_host", "row_count": 1, "rows": [{"FileName": "powershell.exe"}]},
+    "sentinel_ip_connections": {"template": "network_connections_for_ip", "row_count": 1, "rows": [{"RemotePort": 443}]},
+    "sentinel_alerts_for_entity": {"template": "security_alerts_for_entity", "row_count": 1, "rows": [{"AlertName": "Mock Alert"}]},
+    "sentinel_hash_events": {"template": "device_events_for_hash", "row_count": 0, "rows": []},
+    "ip_reputation": {"value": "45.83.220.5", "ioc_type": "ip", "verdict": "clean", "reasons": [], "sources": {}},
+    "hash_reputation": {"ioc_type": "hash", "verdict": "unknown", "reasons": [], "sources": {}},
+    "domain_reputation": {"ioc_type": "domain", "verdict": "clean", "reasons": [], "sources": {}},
+    "jira_get_issue": {"issue": {"key": "SOC-1042", "summary": "Suspicious login", "status": "Open",
+                                 "priority": "High"}},
+    "jira_search": {"issues": [{"key": "SOC-1042", "summary": "Phishing report", "status": "Open"}], "count": 1},
 }
 
 
@@ -78,6 +91,15 @@ CASES: list[Case] = [
     Case("hash_sightings", "crowdstrike-falcon",
          f"Are there any Falcon detections involving the file with SHA256 {_SAMPLE_SHA}?",
          "falcon_hash_sightings", {"sha256": _SAMPLE_SHA}),
+    Case("sentinel_signins", "sentinel-hunt",
+         "Show the Microsoft Sentinel sign-in events for user alice@corp.com over the last 24 hours.",
+         "sentinel_signins", {"upn": "alice@corp.com"}),
+    Case("ip_reputation", "threat-intel",
+         "Check the external threat reputation of the IP address 8.8.8.8.",
+         "ip_reputation", {"ip": "8.8.8.8"}),
+    Case("jira_get_issue", "alert-triage",
+         "Pull up the details of Jira issue SOC-1234 and summarise it.",
+         "jira_get_issue", {"issue_key": "SOC-1234"}),
     Case("no_tool_control", "crowdstrike-falcon",
          "In one sentence, explain what credential dumping is. Do not use any tools.",
          None, {}),

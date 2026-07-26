@@ -31,3 +31,16 @@ def test_non_tool_tasks_resolve_empty():
         t = tasks.get_task(tid)
         assert t.tools == []
         assert tasks.resolve_tools(t) == []
+
+
+def test_phase4_tasks_resolve_their_tools():
+    expected = {
+        "sentinel-hunt": {"sentinel_signins", "sentinel_host_processes", "sentinel_ip_connections",
+                          "sentinel_alerts_for_entity", "sentinel_hash_events"},
+        "threat-intel": {"ip_reputation", "hash_reputation", "domain_reputation"},
+        "alert-triage": {"jira_get_issue", "jira_search"},
+    }
+    for tid, names in expected.items():
+        t = tasks.get_task(tid)
+        assert t is not None, tid
+        assert {tool.name for tool in tasks.resolve_tools(t)} == names

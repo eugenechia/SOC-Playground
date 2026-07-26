@@ -69,6 +69,12 @@ def _perfect_generate(model_id, messages, system_prompt, max_new):
     if "e3b0c442" in prompt:
         return ('{"tool": "falcon_hash_sightings", "args": {"sha256": '
                 '"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}}')
+    if "alice@corp.com" in prompt:
+        return '{"tool": "sentinel_signins", "args": {"upn": "alice@corp.com"}}'
+    if "8.8.8.8" in prompt:
+        return '{"tool": "ip_reputation", "args": {"ip": "8.8.8.8"}}'
+    if "SOC-1234" in prompt:
+        return '{"tool": "jira_get_issue", "args": {"issue_key": "SOC-1234"}}'
     return "Credential dumping is stealing credentials from memory or storage."
 
 

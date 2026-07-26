@@ -42,6 +42,63 @@ tasks:
       - "How would I triage an unknown DLL found in a user's temp folder?"
     tools: []
 
+  - id: sentinel-hunt
+    name: Sentinel Threat Hunt
+    description: >
+      Threat hunting over Microsoft Sentinel / Defender telemetry via read-only
+      KQL. Experiment with how the model pivots across sign-ins, processes,
+      network connections and alerts.
+    system_prompt: |
+      You are a threat-hunting assistant working over Microsoft Sentinel and
+      Defender telemetry. Use the KQL tools to pull sign-ins, host processes,
+      network connections, alerts and file-hash events. Be concise and
+      technical. Never fabricate table data — only report what a tool returned.
+    starter_prompts:
+      - "Show sign-in events for user jdoe@corp.com in the last 24 hours."
+      - "List recent process events on host FIN-DB-02."
+      - "Any security alerts mentioning the IP 203.0.113.10?"
+    tools:
+      - sentinel_signins
+      - sentinel_host_processes
+      - sentinel_ip_connections
+      - sentinel_alerts_for_entity
+      - sentinel_hash_events
+
+  - id: threat-intel
+    name: Threat Intel Lookup
+    description: >
+      External IOC reputation (VirusTotal / AbuseIPDB). Experiment with how the
+      model enriches IPs, hashes and domains. Note: "unknown" never means benign.
+    system_prompt: |
+      You are a threat-intelligence assistant. Use the reputation tools to look
+      up IPs, file hashes and domains against external sources. A verdict of
+      "unknown" means no data was found — it does NOT mean the IOC is safe. Be
+      precise and cite the sources the tool returned.
+    starter_prompts:
+      - "Check the reputation of the IP 45.83.220.5."
+      - "Is the SHA256 <paste-a-hash> known malicious?"
+      - "Look up the domain evil-example.com."
+    tools:
+      - ip_reputation
+      - hash_reputation
+      - domain_reputation
+
+  - id: alert-triage
+    name: Alert Triage (Jira)
+    description: >
+      Pull SOC alert tickets from Jira and reason over them. Experiment with how
+      the model reads a ticket's context. Read-only — no ticket changes.
+    system_prompt: |
+      You are an L1 SOC triage assistant. Use the Jira tools to fetch alert
+      tickets by key or search for them, then summarise and reason over their
+      contents. You cannot modify tickets. Only report what a tool returned.
+    starter_prompts:
+      - "Pull up Jira issue SOC-1042 and summarise it."
+      - "Search Jira for tickets mentioning 'phishing'."
+    tools:
+      - jira_get_issue
+      - jira_search
+
   - id: general-soc
     name: General SOC Assistant
     description: General-purpose SOC analyst assistant for open-ended experimentation.

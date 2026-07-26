@@ -16,7 +16,7 @@ from pathlib import Path
 import yaml
 
 from agents.loop import Tool
-from agents.tools import FALCON_TOOL_MAP
+from agents.tools import ALL_TOOL_MAP
 from app import config
 
 
@@ -30,9 +30,9 @@ class Task:
     tools: list[str] = field(default_factory=list)  # tool ids resolved via TOOL_REGISTRY
 
 
-# Registry of all agent-callable tools: {tool_id: Tool}. Phase 2 wires the
-# read-only Falcon tools; add future integrations here.
-TOOL_REGISTRY: dict[str, Tool] = dict(FALCON_TOOL_MAP)
+# Registry of all agent-callable tools: {tool_id: Tool}. Read-only Falcon,
+# Sentinel (KQL), threat-intel and Jira tools across the integrations.
+TOOL_REGISTRY: dict[str, Tool] = dict(ALL_TOOL_MAP)
 
 
 def resolve_tools(task: Task) -> list[Tool]:
