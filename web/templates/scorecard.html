@@ -3,15 +3,28 @@
 {% block body %}
 <div class="panel">
   <h2>Model tool-calling scorecard</h2>
-  <p class="muted">
-    Runs a fixed suite of SOC cases against each selected model through the agent
-    loop with mock tools, and scores whether it picks the right tool, extracts the
-    right parameters, and finishes. Deterministic and offline — no live Falcon.
-  </p>
+
+  <div class="explainer">
+    <p><strong>What is this page?</strong> Think of it like a driving test for your
+    downloaded AI models. In the <a href="/workbench">Workbench</a>, an AI model can
+    use "tools" to fetch real security data (look up a computer in CrowdStrike, search
+    Jira tickets, run a Sentinel query, and so on). But some models are good at using
+    those tools and some are terrible at it.</p>
+
+    <p>This page gives every model the <strong>same set of test questions</strong> and
+    grades how well it uses the tools. That way you can see, at a glance, <strong>which
+    model is actually good enough to trust</strong> for real work — instead of guessing.</p>
+
+    <p class="explainer-note">It's safe to run: the test uses fake, pretend data, so it
+    never touches your real CrowdStrike, Sentinel or Jira. Same test every time, so the
+    scores are fair to compare.</p>
+  </div>
 
   {% if not models %}
     <div class="empty">No models downloaded. <a href="/models">Download one</a> first.</div>
   {% else %}
+    <p class="muted">Tick the models you want to test, then click <strong>Run
+    benchmark</strong>.</p>
     <form id="scorecard-form" class="scorecard-form">
       <div class="model-picks">
         {% for m in models %}
@@ -23,11 +36,37 @@
       <button type="submit" id="run-btn">Run benchmark</button>
       <span id="run-status" class="muted"></span>
     </form>
+    <p class="explainer-note" style="margin-top:0.8rem">
+      <strong>What "Run benchmark" does:</strong> it loads each ticked model into memory
+      and asks it every question in the list below, one by one. For each question it
+      checks whether the model reached for the right tool and filled in the right
+      details, then adds up the scores into the table. This can take a few minutes per
+      model (the model has to load and think about each question), and you'll see live
+      progress as it goes.
+    </p>
   {% endif %}
 </div>
 
 <div class="panel">
   <h2>Results</h2>
+  <p class="muted">Each score is a percentage — higher is better. Here's what the
+  columns mean:</p>
+  <dl class="metric-legend">
+    <dt>Tool selection</dt>
+    <dd>Did the model reach for the <em>right</em> tool for the question (e.g. use the
+      CrowdStrike lookup when asked about a host)? And did it correctly use <em>no</em>
+      tool when none was needed?</dd>
+    <dt>Params</dt>
+    <dd>"Params" = parameters, the details a tool needs. If the question says "look up
+      host DC-EAST-01", did the model pass <em>DC-EAST-01</em> to the tool, and not
+      something it made up?</dd>
+    <dt>Completed</dt>
+    <dd>Did the model finish cleanly and give a final answer, without erroring out or
+      getting stuck?</dd>
+    <dt>Overall</dt>
+    <dd>A single combined grade (weighted: tool selection 50%, params 30%, completed
+      20%). This is the number to compare models by.</dd>
+  </dl>
   <p id="results-meta" class="muted">
     {% if latest %}Last run: {{ latest.generated_at }}{% else %}No runs yet.{% endif %}
   </p>
@@ -57,6 +96,8 @@
 
 <div class="panel">
   <h2>Benchmark cases</h2>
+  <p class="muted">These are the exact questions every model is asked. For each one we
+  note which tool a good answer should use (or "no tool" when the question needs none).</p>
   <ol class="case-list">
     {% for c in cases %}
       <li>
