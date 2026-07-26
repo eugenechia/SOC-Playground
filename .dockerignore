@@ -1,0 +1,18 @@
+# Keep the build context small and secret-free (used by `az acr build` too).
+.venv/
+.env
+.git/
+.gitignore
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.DS_Store
+# Model weights live on the Azure Files mount, never in the image/context.
+models/
+*.safetensors
+*.gguf
+.hf_cache/
+# Docs / plans not needed in the image
+*.md
+!README.md

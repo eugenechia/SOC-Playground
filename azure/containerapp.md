@@ -1,9 +1,50 @@
 # SOC-Playground — Azure Container Apps deployment
 
 **Dedicated, isolated infrastructure.** SOC-Playground shares nothing with
-SOC-Copilot. Provision its own ACR, its own Container App, its own storage and
-secrets. It may live in the same resource group (`rg-soc-platform`, southeastasia)
-but must reference none of SOC-Copilot's resources.
+SOC-Copilot: its own resource group, ACR, Container App, storage and secrets.
+
+## As deployed (2026-07-26)
+
+| Thing | Value |
+|---|---|
+| Resource group | `rg-soc-playground` (southeastasia) — dedicated |
+| ACR | `socplaygroundreg` (Basic, admin-enabled) |
+| Image | `socplaygroundreg.azurecr.io/soc-playground:latest` (built via `az acr build --platform linux/amd64`) |
+| Storage / share | `socplaygroundstg` / Azure Files share `models` (64 GiB), env-linked as `modelsmount`, mounted at `/models` |
+| Environment | `soc-playground-env` |
+| Container App | `soc-playground` — 2 vCPU / 4 GiB, `min=max=1`, ingress external :8000 |
+| URL | https://soc-playground.bravesky-5d565b4f.southeastasia.azurecontainerapps.io |
+| Secrets | `app-password`, `session-secret` (Container App secrets). **`DEV_AUTH_BYPASS` is NOT set** (password gate on). |
+| Integrations | Falcon/Sentinel/Jira/threat-intel **off** in cloud (no creds set) — tools degrade gracefully. Add creds as Container App secrets to enable. |
+
+Retrieve the app password: `az containerapp secret show -g rg-soc-playground -n soc-playground --secret-name app-password --query value -o tsv`.
+
+### Redeploy a new image
+```bash
+az acr build --registry socplaygroundreg --image soc-playground:latest --platform linux/amd64 .
+az containerapp update -g rg-soc-playground -n soc-playground \
+  --image socplaygroundreg.azurecr.io/soc-playground:latest
+```
+The build honours `.dockerignore` (keeps `.venv`, `.env`, `.git`, weights out of the context).
+
+### The /models mount (added via YAML patch, not the create flags)
+`az containerapp create` didn't take the volume inline; the mount was added by
+fetching the app YAML, injecting under `properties.template`:
+```yaml
+volumes:
+- {name: models, storageType: AzureFile, storageName: modelsmount}
+```
+and on the container: `volumeMounts: [{volumeName: models, mountPath: /models}]`,
+then `az containerapp update --yaml app.yaml`.
+
+### Teardown (removes everything)
+```bash
+az group delete -n rg-soc-playground --yes --no-wait
+```
+
+---
+
+## Reference / from-scratch recipe
 
 Placeholders below — adjust names to taste before running.
 
