@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Home — {{ app_name }}{% endblock %}
+{% block body %}
+<section class="hero">
+  <h1>Welcome to SOC-Playground</h1>
+  <p class="hero-lead">
+    A safe sandbox for security analysts to <strong>experiment with local AI models</strong>
+    on real SOC work — threat hunting, malware analysis and alert triage — without sending
+    anything to an outside AI service.
+  </p>
+</section>
+
+<div class="panel">
+  <h2>What is this?</h2>
+  <p>
+    SOC-Playground lets you download open-source AI models and run them <strong>right here,
+    inside your own environment</strong>. You can chat with a model, let it use real
+    (read-only) security tools on your behalf, and measure how well different models
+    actually perform — so you can decide which ones are worth trusting for real work.
+  </p>
+  <p class="muted">
+    Everything runs on local models: your prompts and data stay in your environment, not with
+    a third-party AI provider. It's a place to explore and compare — not a production triage system.
+  </p>
+</div>
+
+<div class="panel">
+  <h2>Who is it for?</h2>
+  <p>
+    SOC analysts and the security team who want to see, hands-on, how local large language
+    models can help with day-to-day security operations — and who want evidence, not hype,
+    about which model is good enough before relying on it.
+  </p>
+</div>
+
+<div class="panel">
+  <h2>Where to start</h2>
+  <div class="feature-grid">
+    <a class="feature-card" href="/models">
+      <div class="feature-step">1</div>
+      <h3>Models</h3>
+      <p>Download an open-source AI model (from Hugging Face) into the app. Start small — the
+      playground runs on CPU, so lightweight models work best.</p>
+      <span class="feature-go">Go to Models &rarr;</span>
+    </a>
+    <a class="feature-card" href="/workbench">
+      <div class="feature-step">2</div>
+      <h3>Workbench</h3>
+      <p>Pick a task (CrowdStrike Falcon, Sentinel hunt, Jira triage, threat intel, malware) and
+      a model, then chat. The model can call real read-only security tools — and you watch every
+      step it takes.</p>
+      <span class="feature-go">Go to Workbench &rarr;</span>
+    </a>
+    <a class="feature-card" href="/scorecard">
+      <div class="feature-step">3</div>
+      <h3>Scorecard</h3>
+      <p>Benchmark your models on a fixed set of test questions to see which one actually picks
+      the right tools and gets the details right — a driving test for AI models.</p>
+      <span class="feature-go">Go to Scorecard &rarr;</span>
+    </a>
+  </div>
+</div>
+{% endblock %}

@@ -9,8 +9,9 @@
 </head>
 <body>
   <header class="topbar">
-    <div class="brand">{{ app_name }}</div>
+    <a class="brand" href="/">{{ app_name }}</a>
     <nav class="nav">
+      <a href="/" class="{{ 'active' if nav == 'home' else '' }}">Home</a>
       <a href="/models" class="{{ 'active' if nav == 'models' else '' }}">Models</a>
       <a href="/workbench" class="{{ 'active' if nav == 'workbench' else '' }}">Workbench</a>
       <a href="/scorecard" class="{{ 'active' if nav == 'scorecard' else '' }}">Scorecard</a>
