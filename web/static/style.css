@@ -42,7 +42,8 @@ a:hover { text-decoration: underline; }
 .nav { display: flex; gap: 1rem; flex: 1; }
 .nav a { color: var(--muted); padding: 0.25rem 0; }
 .nav a.active { color: var(--text); border-bottom: 2px solid var(--accent); }
-.signout { margin-left: auto; }
+.signout { margin-left: auto; display: flex; align-items: center; gap: 0.75rem; }
+.user-email { color: var(--muted); font-size: 0.85rem; }
 
 .content { max-width: 62rem; margin: 0 auto; padding: 1.5rem; }
 

@@ -14,10 +14,19 @@ SOC-Copilot: its own resource group, ACR, Container App, storage and secrets.
 | Environment | `soc-playground-env` |
 | Container App | `soc-playground` — 2 vCPU / 4 GiB, `min=max=1`, ingress external :8000 |
 | URL | https://soc-playground.bravesky-5d565b4f.southeastasia.azurecontainerapps.io |
-| Secrets | `app-password`, `session-secret` (Container App secrets). **`DEV_AUTH_BYPASS` is NOT set** (password gate on). |
+| Auth | **Entra ID SSO** (MSAL). Own app registration `SOC-Playground` (appId `64fe8978-afc2-40ef-9496-4f15c78282ba`). Access gated to Entra security group **SOCplayground** (`dee6b941-934b-4ea2-9d69-c67712c4507c`) via the id_token `groups` claim. `DEV_AUTH_BYPASS` NOT set. |
+| Secrets | `entra-client-secret`, `session-secret` (Container App secrets). |
 | Integrations | Falcon/Sentinel/Jira/threat-intel **off** in cloud (no creds set) — tools degrade gracefully. Add creds as Container App secrets to enable. |
 
-Retrieve the app password: `az containerapp secret show -g rg-soc-playground -n soc-playground --secret-name app-password --query value -o tsv`.
+### Entra app registration (SOC-Playground)
+- appId `64fe8978-afc2-40ef-9496-4f15c78282ba`, single-tenant (`AzureADMyOrg`), SP created.
+- Web redirect URIs: `http://localhost:8200/auth/callback`, `https://<fqdn>/auth/callback` (+ the roots for post-logout).
+- API permission: Microsoft Graph `User.Read` (delegated, self-consented at login — no admin grant).
+- Token config: `groupMembershipClaims=SecurityGroup` (emits the `groups` claim used for gating).
+- Client secret ("playground-prod2", 2y) → Container App secret `entra-client-secret`.
+- Env on the app: `ENTRA_TENANT_ID`, `ENTRA_CLIENT_ID`, `ENTRA_REDIRECT_URI`, `ENTRA_ALLOWED_GROUP_ID`, `ENTRA_CLIENT_SECRET=secretref:entra-client-secret`.
+- **Access:** only members of the SOCplayground group can sign in. Manage membership:
+  `az ad group member add --group dee6b941-934b-4ea2-9d69-c67712c4507c --member-id <userObjectId>`.
 
 ### Redeploy a new image
 ```bash

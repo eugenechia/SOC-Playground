@@ -1,10 +1,11 @@
-"""Auth gate: unauthenticated requests redirect to /login; correct password lets
-you in; /healthz is public."""
+"""Auth gate (Entra SSO): unauthenticated requests redirect to /auth/login,
+/healthz is public, /auth/status reports state, and DEV_AUTH_BYPASS lets local
+dev through with a synthetic user."""
 from fastapi.testclient import TestClient
 
+from app import auth, config
 from app.main import app
 
-# https base_url so the Secure session cookie (https_only) is returned by the client.
 client = TestClient(app, base_url="https://testserver")
 
 
@@ -14,21 +15,25 @@ def test_healthz_is_public():
     assert r.json()["status"] == "ok"
 
 
-def test_protected_redirects_to_login():
+def test_protected_redirects_to_entra_login():
     r = client.get("/models", follow_redirects=False)
     assert r.status_code == 303
-    assert r.headers["location"] == "/login"
+    assert r.headers["location"] == "/auth/login"
 
 
-def test_login_rejects_wrong_password():
-    r = client.post("/login", data={"password": "nope"}, follow_redirects=False)
-    assert r.status_code == 401
+def test_auth_status_unauthenticated():
+    r = client.get("/auth/status")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["authenticated"] is False and body["email"] == ""
 
 
-def test_login_accepts_correct_password_and_grants_access():
-    c = TestClient(app, base_url="https://testserver")
-    r = c.post("/login", data={"password": "test-password"}, follow_redirects=False)
-    assert r.status_code == 303
-    # Session cookie now set; a protected page should resolve (302 to /models is fine).
-    r2 = c.get("/models", follow_redirects=False)
-    assert r2.status_code == 200
+def test_dev_bypass_allows_access(monkeypatch):
+    # With the bypass on, the middleware injects a synthetic user and skips Entra.
+    monkeypatch.setattr(config, "DEV_AUTH_BYPASS", True)
+    r = client.get("/models", follow_redirects=False)
+    assert r.status_code == 200
+
+
+def test_public_prefixes_cover_auth_static_health():
+    assert auth.PUBLIC_PREFIXES == ("/auth", "/static", "/healthz")

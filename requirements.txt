@@ -4,6 +4,7 @@ uvicorn[standard]==0.34.*
 jinja2==3.1.*
 python-multipart==0.0.*
 itsdangerous==2.2.*
+msal==1.37.*
 pydantic==2.*
 pyyaml==6.*
 httpx==0.28.*

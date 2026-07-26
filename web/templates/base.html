@@ -15,9 +15,11 @@
       <a href="/workbench" class="{{ 'active' if nav == 'workbench' else '' }}">Workbench</a>
       <a href="/scorecard" class="{{ 'active' if nav == 'scorecard' else '' }}">Scorecard</a>
     </nav>
-    <form method="post" action="/logout" class="signout">
-      <button type="submit" class="btn-secondary">Sign out</button>
-    </form>
+    <div class="signout">
+      {% set _u = request.session.get('user') if request else None %}
+      {% if _u and _u.email %}<span class="user-email">{{ _u.email }}</span>{% endif %}
+      <a href="/auth/logout" class="btn-secondary">Sign out</a>
+    </div>
   </header>
   <main class="content">
     {% block body %}{% endblock %}

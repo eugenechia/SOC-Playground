@@ -1,35 +1,54 @@
 """
-Single-password auth via Starlette SessionMiddleware (Orbstack pattern) with
-SOC-Copilot's DEV_AUTH_BYPASS for local dev.
+Entra ID (Azure AD) SSO via MSAL authorization-code flow.
 
-Public routes: /login, /static/*, /healthz. Everything else requires a session
-cookie with 'authed' = True. The password is resolved through secrets.get_secret
-(env wins, then Key Vault) — never read from os.environ directly.
+Ported by value from SOC-Copilot's app/auth.py. Unauthenticated requests are
+auto-redirected to Microsoft; on callback we exchange the code (MSAL validates
+state/nonce/PKCE/id_token) and store a `user` dict in the session. Access is
+gated on membership of ENTRA_ALLOWED_GROUP_ID via the id_token `groups` claim —
+no Graph call. DEV_AUTH_BYPASS injects a synthetic user for local dev.
+
+Public routes: /auth/*, /static/*, /healthz. Everything else needs a session
+user. Secrets resolve via app.secrets.get_secret (env wins, then Key Vault).
 """
 from __future__ import annotations
 
-import hmac
+import logging
 
-from fastapi import APIRouter, Form, Request
-from fastapi.responses import RedirectResponse
-from fastapi.templating import Jinja2Templates
+import msal
+from fastapi import APIRouter, Request
+from fastapi.responses import HTMLResponse, RedirectResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app import config
 from app.secrets import get_secret
 
-PUBLIC_PREFIXES = ("/login", "/static", "/healthz")
+log = logging.getLogger(__name__)
 
-templates = Jinja2Templates(directory=str(config.BASE_DIR / "web" / "templates"))
+router = APIRouter(prefix="/auth")
+
+_SCOPES = ["User.Read"]
+
+PUBLIC_PREFIXES = ("/auth", "/static", "/healthz")
+
+_DENIED_HTML = """<!doctype html><html><head><meta charset="utf-8">
+<title>Access denied</title></head>
+<body style="font-family:sans-serif;background:#0e1117;color:#c9d1d9;padding:3rem">
+<h2>Access denied</h2>
+<p>Your account is not a member of the group allowed to use SOC-Playground.</p>
+<p><a href="/auth/logout" style="color:#2f81f7">Sign out</a> and try a different account.</p>
+</body></html>"""
+
+_DEV_USER = {"name": "Dev User", "email": "dev@local", "oid": "", "groups": []}
 
 
-def password_matches(submitted: str) -> bool:
-    """Constant-time compare against the configured APP_PASSWORD."""
-    expected = get_secret("APP_PASSWORD")
-    if not expected:
-        # No password configured: refuse all logins rather than allowing any.
-        return False
-    return hmac.compare_digest(submitted.encode(), expected.encode())
+def _msal_app() -> msal.ConfidentialClientApplication:
+    """Built per-request: cheap (no network) and never holds stale credentials."""
+    tenant_id = get_secret("ENTRA_TENANT_ID")
+    return msal.ConfidentialClientApplication(
+        get_secret("ENTRA_CLIENT_ID"),
+        authority=f"https://login.microsoftonline.com/{tenant_id}",
+        client_credential=get_secret("ENTRA_CLIENT_SECRET"),
+    )
 
 
 class AuthMiddleware(BaseHTTPMiddleware):
@@ -38,37 +57,71 @@ class AuthMiddleware(BaseHTTPMiddleware):
         if any(path == p or path.startswith(p + "/") for p in PUBLIC_PREFIXES):
             return await call_next(request)
         if config.DEV_AUTH_BYPASS:
-            request.session.setdefault("authed", True)
+            request.session.setdefault("user", dict(_DEV_USER))
             return await call_next(request)
-        if not request.session.get("authed"):
-            return RedirectResponse(url="/login", status_code=303)
+        if not request.session.get("user"):
+            return RedirectResponse(url="/auth/login", status_code=303)
         return await call_next(request)
 
 
-router = APIRouter()
-
-
 @router.get("/login")
-def login_form(request: Request, error: str | None = None):
-    return templates.TemplateResponse(
-        request, "login.html", {"error": error, "app_name": config.APP_NAME}
+def login(request: Request):
+    flow = _msal_app().initiate_auth_code_flow(
+        _SCOPES, redirect_uri=get_secret("ENTRA_REDIRECT_URI")
     )
+    request.session["auth_flow"] = flow
+    return RedirectResponse(flow["auth_uri"], status_code=303)
 
 
-@router.post("/login")
-def login(request: Request, password: str = Form(...)):
-    if password_matches(password):
-        request.session["authed"] = True
-        return RedirectResponse(url="/", status_code=303)
-    return templates.TemplateResponse(
-        request,
-        "login.html",
-        {"error": "Incorrect password.", "app_name": config.APP_NAME},
-        status_code=401,
-    )
+@router.get("/callback")
+def callback(request: Request):
+    flow = request.session.pop("auth_flow", {})
+    if not flow:
+        return RedirectResponse("/auth/login", status_code=303)
+    try:
+        result = _msal_app().acquire_token_by_auth_code_flow(flow, dict(request.query_params))
+    except ValueError as e:
+        log.error("Entra auth_code_flow error: %s", e)
+        return RedirectResponse("/auth/login", status_code=303)
+
+    if "error" in result:
+        log.error("Entra token error: %s", result)
+        desc = result.get("error_description", result["error"])
+        return HTMLResponse(f"Authentication failed: {desc}", status_code=400)
+
+    claims = result.get("id_token_claims", {})
+
+    allowed_group = get_secret("ENTRA_ALLOWED_GROUP_ID")
+    if allowed_group and allowed_group not in (claims.get("groups") or []):
+        log.warning("Access denied for %s — not in group %s",
+                    claims.get("preferred_username"), allowed_group)
+        return HTMLResponse(_DENIED_HTML, status_code=403)
+
+    request.session["user"] = {
+        "name": claims.get("name", ""),
+        "email": claims.get("preferred_username", ""),
+        "oid": claims.get("oid", ""),
+        "groups": claims.get("groups", []),
+    }
+    log.info("Login: %s", request.session["user"]["email"])
+    return RedirectResponse("/", status_code=303)
 
 
+@router.get("/logout")
 @router.post("/logout")
 def logout(request: Request):
     request.session.clear()
-    return RedirectResponse(url="/login", status_code=303)
+    tenant_id = get_secret("ENTRA_TENANT_ID")
+    post_logout = (get_secret("ENTRA_REDIRECT_URI") or "").replace("/auth/callback", "/")
+    return RedirectResponse(
+        f"https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/logout"
+        f"?post_logout_redirect_uri={post_logout}",
+        status_code=303,
+    )
+
+
+@router.get("/status")
+def status(request: Request):
+    user = request.session.get("user")
+    return {"authenticated": bool(user), "email": (user or {}).get("email", ""),
+            "name": (user or {}).get("name", "")}
