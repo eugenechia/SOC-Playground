@@ -27,6 +27,7 @@ from urllib.parse import urlparse
 
 from app import config
 from app.broker import broker
+from app.secrets import get_secret
 from models_engine import registry
 
 # Patterns kept when ALLOW_PICKLE is off — safetensors weights + everything
@@ -92,11 +93,21 @@ def _matches_any(filename: str, patterns: list[str]) -> bool:
     return any(fnmatch.fnmatch(filename, p) for p in patterns)
 
 
+def _hf_token() -> str | None:
+    """HF access token for gated/private repos, or None for anonymous access.
+
+    Resolved via app.secrets (env in dev, Key Vault in prod). Empty → None so the
+    hub client treats it as anonymous, which is the correct behaviour for public
+    repos and keeps existing downloads unchanged when no token is configured.
+    """
+    return get_secret("HF_TOKEN") or None
+
+
 def _repo_plan(repo_id: str) -> tuple[int, bool, list[str]]:
     """Return (selected_total_bytes, has_safetensors, allow_patterns) for a repo."""
     from huggingface_hub import HfApi
 
-    info = HfApi().model_info(repo_id, files_metadata=True)
+    info = HfApi(token=_hf_token()).model_info(repo_id, files_metadata=True)
     siblings = info.siblings or []
     has_safetensors = any((s.rfilename or "").endswith(".safetensors") for s in siblings)
 
@@ -142,6 +153,7 @@ def download(model_id: str, source_url: str, on_progress: ProgressCB) -> registr
                 allow_patterns=allow,
                 local_dir_use_symlinks=False,
                 cache_dir=str(config.HF_HOME),
+                token=_hf_token(),
             )
             result["ok"] = True
         except Exception as e:  # surfaced to the caller after join
